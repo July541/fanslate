@@ -62,5 +62,3 @@ run = do
   case g of
     Right (GRAT x) -> print x
     Left _ ->  print g
-
-

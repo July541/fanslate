@@ -71,5 +71,3 @@ instance Show GRAlternativeTranslation where
 instance FromJSON GRAlternativeTranslation where
   parseJSON = withObject "Alternative translation" $ \o ->
     o .: "alternative_translations" >>= fmap GRAT . parseJSON
-
-
