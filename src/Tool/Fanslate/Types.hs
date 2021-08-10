@@ -1,73 +1,52 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE UndecidableInstances       #-}
 module Tool.Fanslate.Types where
 
-import Data.Aeson
-import Servant.API
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.List (intercalate)
+import           Data.Aeson
+import           Data.List      (intercalate)
+import           Data.Text      (Text)
+import qualified Data.Text      as T
+import           Servant.API
+import           Servant.Client
 
 data Lang =
   SimplifiedChinese | English
 
-data Google
-data Baidu
+data Site = Baidu | Google
+
+type family API (a :: Site)
+type family ExtraParams (a :: Site)
+
+-- | Base translate request
+type BaseReq (a :: Site) = Maybe SourceLang -> Maybe TargetLang -> Maybe Content -> ClientM (ResponseContent a)
+
+type family ClientReq (a :: Site)
+
+data TranslateConfig (a :: Site) = TC {
+  url               :: BaseUrl
+, api               :: ClientReq a
+, extraParams       :: Maybe (ExtraParams a)
+, renderExtraParams :: Maybe (ExtraParams a) -> ClientReq a -> BaseReq a
+}
 
 instance ToHttpApiData Lang where
   toUrlPiece = T.pack . show
 
 instance Show Lang where
   show SimplifiedChinese = "zh-CN"
-  show English = "en"
+  show English           = "en"
 
 instance FromJSON Lang where
   parseJSON (String "zh") = pure SimplifiedChinese
   parseJSON (String "en") = pure English
-  parseJSON (String _) = fail "TBD"
-  parseJSON _ = fail "Expected a string as language"
+  parseJSON (String _)    = fail "TBD"
+  parseJSON _             = fail "Expected a string as language"
 
 newtype SourceLang = SL Lang deriving (ToHttpApiData)
 newtype TargetLang = TL Lang deriving (ToHttpApiData)
 newtype Content = Content Text deriving (ToHttpApiData)
-
-type family ResponseContent a
-type instance ResponseContent Google = GRAlternativeTranslation
-
--- | Google Result: Alternative
-newtype GRAlternativeItem = GRAI {
-  wordPostProc :: Text
-}
-
-instance Show GRAlternativeItem where
-  show = T.unpack . wordPostProc
-
-instance FromJSON GRAlternativeItem where
-  parseJSON = withObject "AlternativeItem" $ \o ->
-    GRAI <$> o .: "word_postproc"
-
-newtype GRAlternative = GRA {
-  alternative :: [GRAlternativeItem]
-}
-
-instance Show GRAlternative where
-  show = intercalate ", " . map show . alternative
-
-instance FromJSON GRAlternative where
-  parseJSON = withObject "Alternative" $ \o ->
-    o .: "alternative" >>= fmap GRA . parseJSON
-
-newtype GRAlternativeTranslation = GRAT {
-  translations :: [GRAlternative]
-}
-
-instance Show GRAlternativeTranslation where
-  show = show . map show . translations
-
-instance FromJSON GRAlternativeTranslation where
-  parseJSON = withObject "Alternative translation" $ \o ->
-    o .: "alternative_translations" >>= fmap GRAT . parseJSON
+type family ResponseContent (a :: Site)

@@ -23,13 +23,15 @@ library
     exposed-modules:  Fanslate
 
     -- Modules included in this library but not exported.
-    other-modules:    Tool.Fanslate.Apis
-                    , Tool.Fanslate.Source
+    other-modules:    Tool.Fanslate.Source
                     , Tool.Fanslate.Types
+                    , Tool.Fanslate.Utils
+                    , Tool.Fanslate.Google.Api
+                    , Tool.Fanslate.Google.Type
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    ghc-options:      -Wall
+    ghc-options:      -Wall, -Wno-orphans
     build-depends:    base ^>=4.14.1.0
                     , servant
                     , servant-client
@@ -43,6 +45,7 @@ library
                     , data-default
                     , bytestring
                     , utf8-string
+                    , extra
     hs-source-dirs:   src
     default-language: Haskell2010
 
@@ -57,10 +60,13 @@ executable fanslate
     ghc-options:      -Wall
     build-depends:
         base ^>=4.14.1.0,
-        fanslate
+        fanslate,
+        data-default,
+        http-client
 
     hs-source-dirs:   exe
     default-language: Haskell2010
+    default-extensions: OverloadedStrings
 
 test-suite fanslate-test
     default-language: Haskell2010

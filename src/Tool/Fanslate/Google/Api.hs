@@ -1,16 +1,14 @@
+{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE TypeFamilies  #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Tool.Fanslate.Apis where
+module Tool.Fanslate.Google.Api where
 
-import Servant.API
-import Data.Text
-import Tool.Fanslate.Types
+import           Data.Text           (Text)
+import           Servant.API
+import           Tool.Fanslate.Types
 
-type family API a
-
-type instance API Google = GoogleTranslateAPI
+type instance API 'Google = GoogleTranslateAPI
 
 type GoogleTranslateAPI = "translate_a"
   :> "single"
@@ -21,4 +19,4 @@ type GoogleTranslateAPI = "translate_a"
   :> QueryParam "sl" SourceLang
   :> QueryParam "tl" TargetLang
   :> QueryParam "q" Content
-  :> Get '[JSON] (ResponseContent Google)
+  :> Get '[JSON] (ResponseContent 'Google)
